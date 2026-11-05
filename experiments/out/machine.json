@@ -1,0 +1,7 @@
+{
+  "cpu": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+  "tw_max_threads": 12,
+  "logical_cores": 12,
+  "physical_cores": 8,
+  "tw_version": 100
+}

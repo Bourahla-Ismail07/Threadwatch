@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0D1117">
+<title>Race view - Threadwatch (design mock-up, simulated data)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ---------- Tokens (from project-brand.md) ---------- */
+:root{
+  --bg:#0D1117; --panel:#151B23; --raise:#1B2430; --line:#263040;
+  --text:#E6EDF3; --muted:#8B98A9;
+  --seq:#9AA6B2; --omp:#2DD4BF; --mpi:#60A5FA; --hybrid:#A78BFA;
+  --alert:#F87171; --warn:#FBBF24; --ok:#4ADE80;
+  --font:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:10px; color-scheme:dark;
+}
+:root[data-theme="light"]{
+  --bg:#F6F8FB; --panel:#FFFFFF; --raise:#EEF2F7; --line:#D5DCE6;
+  --text:#0D1117; --muted:#4B5668;
+  --seq:#5B6675; --omp:#0F766E; --mpi:#1D4ED8; --hybrid:#6D28D9;
+  --alert:#B91C1C; --warn:#92400E; --ok:#15803D; color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 var(--font)}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:-.01em}
+.brand small{color:var(--muted);font-weight:400}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+select,button{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+button{cursor:pointer} button.primary{background:var(--omp);color:#0D1117;border-color:var(--omp);font-weight:600}
+:root[data-theme="light"] button.primary{color:#fff}
+:focus-visible{outline:2px solid var(--mpi);outline-offset:2px}
+.note{margin:12px 20px 0;color:var(--muted);font-size:12.5px}
+main{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;padding:14px 20px 28px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;flex-direction:column;gap:10px}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mode{display:flex;align-items:center;gap:8px;font-weight:600}
+.mk{width:12px;height:12px;display:inline-block;background:var(--c)}
+.mk.circle{border-radius:50%} .mk.triangle{clip-path:polygon(50% 0,100% 100%,0 100%)}
+.mk.diamond{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%)} .mk.hex{clip-path:polygon(25% 5%,75% 5%,100% 50%,75% 95%,25% 95%,0 50%)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:12px}
+.bar{height:8px;background:var(--raise);border-radius:4px;overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:var(--c)}
+.row{display:flex;justify-content:space-between;gap:8px}
+canvas{width:100%;height:90px;display:block;background:var(--raise);border-radius:6px}
+.lanes{display:grid;gap:4px}
+.lane{display:grid;grid-template-columns:30px minmax(0,1fr) 82px;gap:6px;align-items:center;font-size:12px}
+.cores{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;align-items:end;height:48px}
+.cores i{display:block;background:var(--c);opacity:.85;border-radius:2px 2px 0 0;min-height:2px}
+.card{display:none;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--raise)}
+.card.on{display:block}
+.card b{font-family:var(--mono)} .ok{color:var(--ok)}
+h2{font-size:12px;margin:0;color:var(--muted);font-weight:500;letter-spacing:.04em;text-transform:uppercase}
+@media (max-width:768px){header{padding:12px 14px}main{padding:12px 14px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden="true"><path d="M1 10H8M8 10C13 10 13 3 19 3M8 10H19M8 10C13 10 13 17 19 17M19 3H23M19 10H23M19 17H23" fill="none" stroke="var(--omp)" stroke-width="1.6" stroke-linecap="round"/><circle cx="25" cy="10" r="2.2" fill="var(--alert)"/></svg>
+    <span>Threadwatch <small>· Same detections, in a fraction of the time.</small></span>
+  </div>
+  <div class="controls">
+    <label class="small muted" for="size">Series</label>
+    <select id="size"><option>syn_5M · 5,000,000 samples</option><option>syn_10M</option><option>NAB cpu_utilization</option></select>
+    <label class="small muted" for="det">Detector</label>
+    <select id="det"><option>Rolling MAD</option><option>Rolling z-score</option><option>K-Means distance</option></select>
+    <button class="primary" id="run">Run race</button>
+    <button id="theme" aria-label="Toggle light and dark theme">Theme</button>
+  </div>
+</header>
+<p class="note">Design mock-up with <b>simulated data</b>. Modes run one after another, never at the same time, so their timings stay fair. Reported benchmark numbers come from headless runs.</p>
+<main id="grid"></main>
+
+<script>
+const MODES=[
+ {id:"C-1",   c:"var(--seq)", v:"--seq",    mk:"circle",   threads:1, speed:1.0, cores:[0]},
+ {id:"OMP-4", c:"var(--omp)", v:"--omp",    mk:"triangle", threads:4, speed:3.5, cores:[0,1,2,3]},
+ {id:"MPI-4", c:"var(--mpi)", v:"--mpi",    mk:"diamond",  threads:4, speed:3.1, cores:[0,1,2,3]},
+ {id:"HYB-2×2",c:"var(--hybrid)",v:"--hybrid",mk:"hex",      threads:4, speed:3.3, cores:[0,1,2,3]}
+];
+const N=5_000_000, T1=9.6; // seconds, simulated
+const grid=document.getElementById("grid");
+const panels=MODES.map(m=>{
+  const el=document.createElement("section"); el.className="panel"; el.style.setProperty("--c",m.c);
+  el.setAttribute("aria-label","Panel "+m.id);
+  el.innerHTML=`
+   <div class="ph"><div class="mode"><span class="mk ${m.mk}" aria-hidden="true"></span>${m.id}</div><span class="mono small muted" data-k="el">0.0 s</span></div>
+   <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i data-k="bar"></i></div>
+   <div class="row small"><span class="muted">windows done</span><span class="mono" data-k="done">0 / ${N.toLocaleString("en")}</span></div>
+   <h2>Throughput (samples/s)</h2><canvas data-k="tp" width="640" height="180"></canvas>
+   <h2>Thread lanes (windows done)</h2><div class="lanes" data-k="lanes"></div>
+   <h2>Core load (%)</h2><div class="cores" data-k="cores"></div>
+   <div class="card" data-k="card"></div>`;
+  grid.appendChild(el);
+  const q=k=>el.querySelector(`[data-k=${k}]`);
+  const lanes=q("lanes"); for(let t=0;t<m.threads;t++){lanes.insertAdjacentHTML("beforeend",`<div class="lane"><span class="mono muted">T${t}</span><div class="bar"><i data-t="${t}"></i></div><span class="mono" data-n="${t}">0</span></div>`);}
+  const cores=q("cores"); for(let i=0;i<8;i++) cores.insertAdjacentHTML("beforeend","<i style='height:4%'></i>");
+  return {m,el,q,hist:[]};
+});
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+async function runMode(p){
+  const {m,q}=p, total=T1/m.speed, start=performance.now(); p.hist=[];
+  q("card").classList.remove("on");
+  for(;;){
+    const t=(performance.now()-start)/1000*4;            // 4x faster than real time for the mock-up
+    const f=Math.min(1,t/total), done=Math.round(N*f);
+    q("bar").style.width=(f*100)+"%"; q("bar").parentElement.setAttribute("aria-valuenow",Math.round(f*100));
+    q("el").textContent=(t).toFixed(1)+" s"; q("done").textContent=done.toLocaleString("en")+" / "+N.toLocaleString("en");
+    const share=done/m.threads;
+    for(let k=0;k<m.threads;k++){const w=share*(1-0.06*k/m.threads);q("lanes").querySelector(`[data-t="${k}"]`).style.width=(w/N*m.threads*100)+"%";q("lanes").querySelector(`[data-n="${k}"]`).textContent=Math.round(w).toLocaleString("en");}
+    const busy=f<1;
+    [...q("cores").children].forEach((c,i)=>{c.style.height=(busy&&m.cores.includes(i)?88+Math.sin(t*3+i)*8:6)+"%"});
+    p.hist.push(busy?N/total*(0.9+0.1*Math.sin(t*4)):0); if(p.hist.length>120)p.hist.shift();
+    draw(q("tp"),p.hist,m.v);
+    if(f>=1)break; await sleep(60);
+  }
+  const sp=T1/total, eff=sp/m.threads*100;
+  const card=q("card"); card.classList.add("on");
+  card.innerHTML=`Time <b>${total.toFixed(2)} s</b> · speedup vs C-1 <b>${sp.toFixed(1)}×</b> · efficiency <b>${eff.toFixed(0)}%</b><br>Throughput <b>${(N/total/1e6).toFixed(2)} M samples/s</b> · F1 <b class="ok">0.91, identical to sequential</b>`;
+}
+function draw(cv,h,v){
+  const g=cv.getContext("2d"),W=cv.width,H=cv.height; g.clearRect(0,0,W,H);
+  g.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  g.lineWidth=3;g.beginPath();
+  const max=Math.max(...h,1)*1.15;
+  h.forEach((val,i)=>{const x=i/119*W,y=H-(val/max)*H*0.9-4; i?g.lineTo(x,y):g.moveTo(x,y)}); g.stroke();
+}
+document.getElementById("run").onclick=async e=>{
+  e.target.disabled=true;
+  for(const p of panels){ await runMode(p); await sleep(300); }
+  e.target.disabled=false;
+};
+document.getElementById("theme").onclick=()=>{
+  const r=document.documentElement; r.dataset.theme=r.dataset.theme==="dark"?"light":"dark";
+};
+</script>
+</body>
+</html>
