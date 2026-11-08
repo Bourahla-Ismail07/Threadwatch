@@ -1,5 +1,9 @@
 # Changelog
 
+## D-04
+- D-04: C SDK kernels (threads=1) with ctypes wrapper, equivalence < 1e-5 vs NumPy, T1 and G_lang recorded
+- MAD quickselect uses a three-way partition, so flat or repeated-value windows stay linear.
+
 ## D-03
 - D-03: Python sequential detectors (z-score, MAD, K-Means, Isolation Forest), metrics, first F1 and T_py table
 

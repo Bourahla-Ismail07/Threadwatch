@@ -36,6 +36,16 @@ python experiments/first_results.py --datasets syn_1M syn_2M nab_ec2_cpu_utiliza
 
 Writes `experiments/out/first-results.csv` and [`docs/first-results.md`](docs/first-results.md) (F1 table and `T_py`).
 
+## C SDK, one thread (D-04)
+
+Kernels in `sdk/src/`: window features, z-score, MAD (quickselect), K-Means score. Public ABI in `sdk/include/threadwatch.h`; Python wrappers in `python/threadwatch/sdk.py`.
+
+```powershell
+python experiments/t1_results.py       # T1, G_lang = T_py / T1 and equivalence on syn_1M -> docs/t1-results.md
+```
+
+Rebuild the DLL (MSYS2 UCRT64 shell, `make build/threadwatch.dll`) after any change in `sdk/`. Python must not have the DLL loaded while it is rebuilt (close running Python sessions).
+
 ## Machine: logical vs physical cores
 
 `tw_max_threads()` returns the number of **logical** cores; the physical count can be lower. Record both:
