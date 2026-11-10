@@ -46,6 +46,16 @@ python experiments/t1_results.py       # T1, G_lang = T_py / T1 and equivalence 
 
 Rebuild the DLL (MSYS2 UCRT64 shell, `make build/threadwatch.dll`) after any change in `sdk/`. Python must not have the DLL loaded while it is rebuilt (close running Python sessions).
 
+## OpenMP kernels (D-05)
+
+All kernels take `threads=`; the output is bit-identical for every thread count (one writer per output slot, no float reductions). Requests above the logical core count are capped and the real count is in `stats.threads`. Per-thread progress counters: `sdk.progress_array(threads)` (64-byte stride) and `sdk.progress_total()`.
+
+```powershell
+python experiments/omp_quick_scaling.py      # speedup at 1,2,4,8,max threads on syn_5M + MAD schedule comparison -> docs/omp-notes.md
+```
+
+Run it on a quiet machine, **not** pinned to one CPU (plugged in, other apps closed, OneDrive paused). Rebuild the DLL after any change in `sdk/` (MSYS2 UCRT64 shell, `make build/threadwatch.dll`).
+
 ## Machine: logical vs physical cores
 
 `tw_max_threads()` returns the number of **logical** cores; the physical count can be lower. Record both:

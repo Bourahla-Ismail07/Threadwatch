@@ -1,5 +1,9 @@
 # Changelog
 
+## D-05
+- D-05: OpenMP kernels with per-thread counters, output identical for 1..max threads, first scaling table
+- Thread requests are capped at the logical core count; `tw_mad_ex` adds a static/dynamic schedule choice.
+
 ## D-04
 - D-04: C SDK kernels (threads=1) with ctypes wrapper, equivalence < 1e-5 vs NumPy, T1 and G_lang recorded
 - MAD quickselect uses a three-way partition, so flat or repeated-value windows stay linear.

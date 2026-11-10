@@ -63,6 +63,13 @@ def test_c_kmeans_returns_minus_one_on_bad_arguments():
         assert fn(*args) == -1
 
 
+def test_progress_array_must_hold_threads_times_eight():
+    with pytest.raises(ValueError):
+        sdk.zscore(X, 16, threads=4, progress=np.zeros(8, np.int64))        # needs 32 elements
+    out, st = sdk.zscore(X, 16, threads=4, progress=sdk.progress_array(4))
+    assert st.windows == len(out)
+
+
 def test_non_contiguous_input_is_accepted():
     strided = np.random.default_rng(2).normal(size=1000).astype(np.float32)[::2]
     assert not strided.flags.c_contiguous
@@ -70,9 +77,9 @@ def test_non_contiguous_input_is_accepted():
     assert len(out) == st.windows == len(strided) - 31
 
 
-def test_threads_above_one_are_accepted_and_ignored():
-    out, st = sdk.zscore(X, 16, threads=4)
-    assert st.threads == 1 and len(out) == len(X) - 15
+def test_threads_are_capped_at_logical_processors_and_reported():
+    out, st = sdk.zscore(X, 16, threads=10_000)
+    assert st.threads == sdk.max_threads() and len(out) == len(X) - 15
 
 
 def test_flat_windows_do_not_slow_mad_down():
