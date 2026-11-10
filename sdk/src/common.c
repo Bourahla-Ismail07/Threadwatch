@@ -25,13 +25,24 @@ int tw_validate(const float* x, int64_t n, int32_t w, int32_t s, const void* out
     return TW_OK;
 }
 
-void tw_finish(tw_stats* st, int64_t windows, double start_ms) {
+void tw_finish(tw_stats* st, int64_t windows, double start_ms, int32_t threads) {
     if (st) {
         st->windows = windows;
         st->ms = tw_now_ms() - start_ms;
-        st->threads = 1;
+        st->threads = threads;
         st->status = TW_OK;
     }
+}
+
+/* More threads than logical processors only adds overhead, so the request is capped and the
+   real team size is reported in stats->threads. Build with -DTW_NO_THREAD_CAP to test oversubscription. */
+int32_t tw_effective_threads(int32_t requested) {
+#ifdef TW_NO_THREAD_CAP
+    return requested;
+#else
+    int32_t cap = (int32_t)omp_get_num_procs();
+    return requested < cap ? requested : cap;
+#endif
 }
 
 /* one window, double accumulation: mean, sample std (ddof = 1), min, max */

@@ -1,7 +1,9 @@
-"""Python wrappers for the sequential C kernels (D-04).
+"""Python wrappers for the C kernels (D-04 sequential, D-05 OpenMP).
 
 Every wrapper returns (result, stats) where stats is a TwStats (windows, ms measured inside the C
-code, threads, status). Return codes are mapped to exceptions: -1 ValueError, -2 MemoryError,
+parallel region, threads actually used, status). `threads` is capped at the logical processor count
+(see max_threads()) and the real team size is in stats.threads. The result never depends on `threads`.
+Progress: pass progress_array(threads); counter t is progress[t * 8]; progress_total() sums them. Return codes are mapped to exceptions: -1 ValueError, -2 MemoryError,
 -3 RuntimeError. Inputs are converted to contiguous float32 arrays; the references stay alive in
 the wrapper until the C call returns.
 """
@@ -44,20 +46,37 @@ def _window_args(a, w, s, threads):
     return w, s, threads, (len(a) - w) // s + 1
 
 
-def _progress_ptr(progress):
+def max_threads():
+    """Logical processors the OpenMP runtime will use by default (the cap for `threads`)."""
+    return int(lib().tw_max_threads())
+
+
+def progress_array(threads):
+    """Zeroed counter array for a call with `threads` threads: 8 int64 (64 bytes) per thread."""
+    return np.zeros(int(threads) * 8, dtype=np.int64)
+
+
+def progress_total(progress):
+    """Windows processed so far, summed over the per-thread counters."""
+    return int(progress[::8].sum())
+
+
+def _progress_ptr(progress, threads):
     if progress is None:
         return None
     if (not isinstance(progress, np.ndarray) or progress.dtype != np.int64
-            or not progress.flags.c_contiguous or progress.size < 1):
-        raise ValueError("progress must be a contiguous int64 numpy array")
+            or not progress.flags.c_contiguous or progress.size < int(threads) * 8):
+        raise ValueError("progress must be a contiguous int64 numpy array of at least threads * 8 elements "
+                         "(use progress_array(threads))")
     return progress.ctypes.data_as(C.POINTER(C.c_int64))
 
 
-def _run(name, x, w, s, threads, progress):
+def _run(name, x, w, s, threads, progress, *extra):
     a = _series(x)
     w, s, threads, nw = _window_args(a, w, s, threads)
     out, st = np.empty(nw, np.float32), TwStats()
-    _check(getattr(lib(), name)(a, len(a), w, s, out, threads, _progress_ptr(progress), C.byref(st)))
+    _check(getattr(lib(), name)(a, len(a), w, s, out, threads, _progress_ptr(progress, threads),
+                                C.byref(st), *extra))
     return out, st
 
 
@@ -66,7 +85,7 @@ def window_features(x, w=256, s=1, threads=1, progress=None):
     w, s, threads, nw = _window_args(a, w, s, threads)
     out, st = np.empty((nw, 4), np.float32), TwStats()
     _check(lib().tw_window_features(a, len(a), w, s, out.reshape(-1), threads,
-                                    _progress_ptr(progress), C.byref(st)))
+                                    _progress_ptr(progress, threads), C.byref(st)))
     return out, st
 
 
@@ -74,8 +93,11 @@ def zscore(x, w=256, s=1, threads=1, progress=None):
     return _run("tw_zscore", x, w, s, threads, progress)
 
 
-def mad(x, w=256, s=1, threads=1, progress=None):
-    return _run("tw_mad", x, w, s, threads, progress)
+def mad(x, w=256, s=1, threads=1, progress=None, schedule="static"):
+    """schedule: "static" (equal blocks) or "dynamic" (chunks of 4096 windows); same output either way."""
+    if schedule not in ("static", "dynamic"):
+        raise ValueError('schedule must be "static" or "dynamic"')
+    return _run("tw_mad_ex", x, w, s, threads, progress, 0 if schedule == "static" else 1)
 
 
 def kmeans_score(features, centroids, scale, threads=1, progress=None):
@@ -87,5 +109,5 @@ def kmeans_score(features, centroids, scale, threads=1, progress=None):
         raise ValueError("incompatible features, centroids or scale, or threads < 1")
     out, st = np.empty(len(F), np.float32), TwStats()
     _check(lib().tw_kmeans_score(F, len(F), F.shape[1], Cn, sc, len(Cn), out, int(threads),
-                                 _progress_ptr(progress), C.byref(st)))
+                                 _progress_ptr(progress, threads), C.byref(st)))
     return out, st

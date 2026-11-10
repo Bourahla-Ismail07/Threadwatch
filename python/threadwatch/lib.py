@@ -35,6 +35,8 @@ def load(path=None, mingw_bin=r"C:\msys64\ucrt64\bin"):
         fn = getattr(lib, name)
         fn.argtypes = [F32, C.c_int64, C.c_int32, C.c_int32, F32, C.c_int32, p64, pst]
         fn.restype = C.c_int
+    lib.tw_mad_ex.argtypes = [F32, C.c_int64, C.c_int32, C.c_int32, F32, C.c_int32, p64, pst, C.c_int32]
+    lib.tw_mad_ex.restype = C.c_int
     lib.tw_kmeans_score.argtypes = [F32, C.c_int64, C.c_int32, F32, F32, C.c_int32,
                                     F32, C.c_int32, p64, pst]
     lib.tw_kmeans_score.restype = C.c_int
