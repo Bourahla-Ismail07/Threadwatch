@@ -17,3 +17,6 @@
 ## D-01
 - D-01: project sheet, repo scaffold, hello DLL and hello MPI checks passing
 - Added `experiments/cpu_info.py` and `tests/python/test_cores.py` to record logical vs physical cores.
+
+## D-06
+- D-06: MPI file and scatter drivers with overlap rule, hybrid runs, output identical to C-1
