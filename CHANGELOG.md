@@ -1,5 +1,8 @@
 # Changelog
 
+## D-06
+D-06: MPI file and scatter drivers with overlap rule, hybrid runs, output identical to C-1
+
 ## D-05
 - D-05: OpenMP kernels with per-thread counters, output identical for 1..max threads, first scaling table
 - Thread requests are capped at the logical core count; `tw_mad_ex` adds a static/dynamic schedule choice.
