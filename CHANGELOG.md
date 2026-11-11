@@ -1,7 +1,10 @@
 # Changelog
 
+## D-07
+- D-07: live dashboard (FastAPI SSE + vanilla JS): thread lanes, core load, throughput, race view; overhead < 2%
+
 ## D-06
-D-06: MPI file and scatter drivers with overlap rule, hybrid runs, output identical to C-1
+- D-06: MPI file and scatter drivers with overlap rule, hybrid runs, output identical to C-1
 
 ## D-05
 - D-05: OpenMP kernels with per-thread counters, output identical for 1..max threads, first scaling table
@@ -23,3 +26,6 @@ D-06: MPI file and scatter drivers with overlap rule, hybrid runs, output identi
 
 ## D-06
 - D-06: MPI file and scatter drivers with overlap rule, hybrid runs, output identical to C-1
+
+## D-07
+- D-07: live dashboard (FastAPI SSE + vanilla JS): thread lanes, core load, throughput, race view; overhead < 2%

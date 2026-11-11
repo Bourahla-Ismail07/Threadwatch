@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0D1117">
+<title>Threadwatch live dashboard</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 28 28'%3E%3Cpath d='M3 8h16M3 13h16M3 18h16' stroke='%232DD4BF' stroke-width='2.4' stroke-linecap='round'/%3E%3Ccircle cx='24' cy='13' r='2.6' fill='%23F87171'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#grid">Skip to panels</a>
+<header>
+  <div class="brand">
+    <svg width="28" height="20" viewBox="0 0 28 20" aria-hidden="true"><path d="M1 10H8M8 10C13 10 13 3 19 3M8 10H19M8 10C13 10 13 17 19 17M19 3H23M19 10H23M19 17H23" fill="none" stroke="var(--omp)" stroke-width="1.6" stroke-linecap="round"/><circle cx="25" cy="10" r="2.2" fill="var(--alert)"/></svg>
+    <span>Threadwatch <small>&middot; Same detections, in a fraction of the time.</small></span>
+  </div>
+  <div class="controls">
+    <button id="theme" type="button" aria-label="Toggle light and dark theme">Theme</button>
+  </div>
+</header>
+
+<section class="toolbar" aria-label="Run controls">
+  <div class="group">
+    <label class="small muted" for="dataset">Series</label>
+    <select id="dataset"><option>loading...</option></select>
+    <label class="small muted" for="detector">Detector</label>
+    <select id="detector">
+      <option value="mad">Rolling MAD</option>
+      <option value="zscore">Rolling z-score</option>
+      <option value="kmeans">K-Means distance</option>
+    </select>
+    <span class="small muted mono" id="cores"></span>
+    <label class="small check" title="Run with more ranks x threads than logical cores. Timings are then not comparable."><input type="checkbox" id="oversub"> allow oversubscription</label>
+  </div>
+  <div class="group" role="group" aria-label="Single run">
+    <label class="small muted" for="mode">Mode</label>
+    <select id="mode">
+      <option value="PY-SEQ">PY-SEQ (progress only)</option>
+      <option value="C-1" selected>C-1</option>
+      <option value="OMP">OMP-p</option>
+      <option value="MPI">MPI-q</option>
+      <option value="HYB">HYB-q&times;p</option>
+    </select>
+    <span id="threads-wrap" hidden><label class="small muted" for="threads">threads p</label>
+      <input id="threads" type="number" min="1" max="256" value="4"></span>
+    <span id="ranks-wrap" hidden><label class="small muted" for="ranks">ranks q</label>
+      <input id="ranks" type="number" min="1" max="256" value="2"></span>
+    <span id="input-wrap" hidden><label class="small muted" for="input">input</label>
+      <select id="input"><option value="file">file (every rank maps the file)</option><option value="scatter">scatter (rank 0 sends slices)</option></select></span>
+    <button class="primary" id="run" type="button">Run</button>
+  </div>
+  <details class="group race">
+    <summary>Race: modes one after another</summary>
+    <fieldset id="racemodes">
+      <legend class="sr-only">Modes in the race</legend>
+      <label class="check"><input type="checkbox" value="C-1" checked disabled> C-1 (always first: the reference)</label>
+      <label class="check"><input type="checkbox" value="PY-SEQ"> PY-SEQ (slow)</label>
+      <label class="check"><input type="checkbox" value="OMP-2"> OMP-2</label>
+      <label class="check"><input type="checkbox" value="OMP-4"> OMP-4</label>
+      <label class="check"><input type="checkbox" value="OMP-8"> OMP-8</label>
+      <label class="check"><input type="checkbox" value="MPI-2"> MPI-2</label>
+      <label class="check"><input type="checkbox" value="MPI-4"> MPI-4</label>
+      <label class="check"><input type="checkbox" value="HYB-2x2"> HYB-2&times;2</label>
+      <label class="check"><input type="checkbox" value="HYB-2x4"> HYB-2&times;4</label>
+    </fieldset>
+    <button class="primary" id="race" type="button">Run race</button>
+  </details>
+  <span id="busy" class="small mono warn" hidden>a run is in progress</span>
+</section>
+
+<p class="note">Modes run one after another, never at the same time, so they do not compete for the same cores. Reported benchmark numbers come from headless runs, not from this page.</p>
+<p id="msg" class="error" role="alert" hidden></p>
+<div id="status" class="sr-only" role="status" aria-live="polite"></div>
+
+<main id="grid"></main>
+<section id="summary" class="summary" hidden aria-label="Race summary"></section>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>

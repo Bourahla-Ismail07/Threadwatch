@@ -100,3 +100,14 @@ def test_flat_windows_do_not_slow_mad_down():
     base = best(random)
     assert best(flat) < 4 * base + 0.05
     assert best(two) < 4 * base + 0.05
+
+
+def test_out_buffer_is_filled_in_place_and_validated():
+    x = np.random.default_rng(3).normal(size=2000).astype(np.float32)
+    ref, _ = sdk.zscore(x, 32, 1)
+    out = np.empty(len(ref), np.float32)
+    got, _ = sdk.zscore(x, 32, 1, out=out)
+    assert got is out and np.array_equal(out, ref)
+    for bad in (np.empty(len(ref) - 1, np.float32), np.empty(len(ref), np.float64), np.empty(2 * len(ref), np.float32)[::2]):
+        with pytest.raises(ValueError):
+            sdk.zscore(x, 32, 1, out=bad)
