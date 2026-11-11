@@ -24,28 +24,47 @@ INT_MAX = 2**31 - 1          # MPI counts are C ints (see pitfall: Gatherv on Wi
 # --------------------------------------------------------------------------
 # the one place that touches the SDK wrapper (python/threadwatch/sdk.py, D-04/D-05)
 # --------------------------------------------------------------------------
-def sdk_compute(detector, x, w, s, threads, model=None):
+def accepts_out(fn) -> bool:
+    """True if the SDK wrapper can write into a caller buffer (`out=`), which makes scores visible live."""
+    import inspect
+    return "out" in inspect.signature(fn).parameters
+
+
+def sdk_compute(detector, x, w, s, threads, model=None, progress=None, out=None):
     """Same DLL call as C-1 / OMP-p. Returns (score float32, dll_ms).
 
     zscore, mad : sdk.zscore / sdk.mad(x, w, s, threads)  -> (scores, stats)
     kmeans      : C features, then C K-Means score; `model` = (centroids, scale)
+
+    progress : optional int64 array, threads*8 entries (D-05 counters); None = no counters.
+    out      : optional float32 array of the right length. Passed to the wrapper when it accepts `out=`
+               (scores then appear in it while the call runs); otherwise the result is copied at the end.
     """
     from threadwatch import sdk                       # imported late: partition.py stays MPI/SDK free
 
-    if detector == "zscore":
-        score, st = sdk.zscore(x, w=w, s=s, threads=threads)
-        return score, float(st.ms)
-    if detector == "mad":
-        score, st = sdk.mad(x, w=w, s=s, threads=threads)
-        return score, float(st.ms)
-    if detector == "kmeans":
+    def call(fn, *args, **kw):
+        if progress is not None:
+            kw["progress"] = progress
+        if out is not None and accepts_out(fn):
+            kw["out"] = out
+        return fn(*args, **kw)
+
+    if detector in ("zscore", "mad"):
+        score, st = call(getattr(sdk, detector), x, w=w, s=s, threads=threads)
+        ms = float(st.ms)
+    elif detector == "kmeans":
         if model is None:
             raise ValueError("kmeans needs model=(centroids, scale)")
         centroids, scale = model
-        feats, st1 = sdk.window_features(x, w=w, s=s, threads=threads)
-        score, st2 = sdk.kmeans_score(feats, centroids, scale, threads=threads)
-        return score, float(st1.ms) + float(st2.ms)
-    raise ValueError(f"unknown detector {detector!r}")
+        feats, st1 = sdk.window_features(x, w=w, s=s, threads=threads)       # features stage: no counters
+        score, st2 = call(sdk.kmeans_score, feats, centroids, scale, threads=threads)
+        ms = float(st1.ms) + float(st2.ms)
+    else:
+        raise ValueError(f"unknown detector {detector!r}")
+    if out is not None and score is not out:
+        out[:] = score
+        score = out
+    return score, ms
 
 
 # --------------------------------------------------------------------------
@@ -80,10 +99,16 @@ def file_length(path: str) -> int:
     return size // 4
 
 
-def run(mode, path, w, s, threads, detector, comm=None, model=None, compute=None):
+def run(mode, path, w, s, threads, detector, comm=None, model=None, compute=None, progress=None, out=None):
     """Run one detector over the series in `path` on all ranks of `comm`.
 
     Returns (timings, scores). Both are None on ranks other than 0.
+
+    progress : optional shared int64 memmap with q*threads*8 entries (D-07). Rank r passes its own
+               threads*8 block to the kernel, so counter of (rank r, thread t) is at (r*threads + t)*8.
+    out      : optional shared float32 memmap with nw entries (D-07). File mode: every rank writes its
+               windows [a, b) into it, live when the SDK accepts `out=`. Scatter mode: rank 0 fills it
+               after the gather. Not part of the timed phases except the file-mode copy (documented).
 
     timings (seconds): in_s, compute_s, gather_s, total_s, each the MAXIMUM over ranks
     (the slowest rank sets the pace), plus comm_s (= in_s for scatter, 0 for file, + gather_s),
@@ -130,7 +155,12 @@ def run(mode, path, w, s, threads, detector, comm=None, model=None, compute=None
     # ---- compute (same DLL call as OMP-p, own `threads`) ----------------
     t = perf_counter()
     if b > a:
-        score, dll_ms = compute(detector, np.ascontiguousarray(x), w, s, threads, model)
+        kw = {}
+        if progress is not None:
+            kw["progress"] = progress[r * threads * 8:(r + 1) * threads * 8]
+        if out is not None and mode == "file":
+            kw["out"] = out[a:b]
+        score, dll_ms = compute(detector, np.ascontiguousarray(x), w, s, threads, model, **kw)
         score = np.ascontiguousarray(score, dtype=np.float32)
         if len(score) != b - a:
             raise RuntimeError(f"rank {r}: kernel returned {len(score)} scores, expected {b - a}")
@@ -146,6 +176,15 @@ def run(mode, path, w, s, threads, detector, comm=None, model=None, compute=None
 
     comm.Barrier()
     t_total = perf_counter() - t_all
+
+    if out is not None:                                  # service convenience, outside the timed phases
+        if mode == "scatter" and r == 0:
+            out[:] = full_score
+        elif mode == "file" and b > a:
+            out[a:b] = score                             # no-op when the kernel already wrote into out
+        if hasattr(out, "flush"):
+            out.flush()
+        comm.Barrier()
 
     per_rank = comm.gather((t_in, t_cmp, t_out, t_total, dll_ms), root=0)
     if r != 0:

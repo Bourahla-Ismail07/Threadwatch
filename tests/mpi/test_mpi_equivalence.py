@@ -123,3 +123,30 @@ def test_one_rank_partition_is_identity(series_file):
     n = COMM.bcast(n, root=0)
     (p,) = partition(n, 32, 1, 1)
     assert (p.a, p.b, p.lo, p.hi) == (0, num_windows(n, 32, 1), 0, n)
+
+
+@pytest.mark.parametrize("mode", ["file", "scatter"])
+@pytest.mark.parametrize("threads", [1, 2])
+def test_shared_progress_and_scores(series_file, tmp_path_factory, mode, threads):
+    """D-07 hooks: counters land in the right slots and add up to nw; the shared score buffer holds the result."""
+    w, s = 32, 3
+    n = COMM.bcast(len(np.fromfile(series_file, np.float32)) if RANK == 0 else None, root=0)
+    nw = num_windows(n, w, s)
+    base = COMM.bcast(str(tmp_path_factory.mktemp("shared")) if RANK == 0 else None, root=0)
+    pf, sf = f"{base}/progress.bin", f"{base}/scores.f32"
+    if RANK == 0:
+        np.memmap(pf, np.int64, "w+", shape=(SIZE * threads * 8,)).flush()
+        np.memmap(sf, np.float32, "w+", shape=(nw,)).flush()
+    COMM.Barrier()
+    progress, out = np.memmap(pf, np.int64, "r+"), np.memmap(sf, np.float32, "r+")
+    _, got = run(mode, series_file, w, s, threads, "mad", comm=COMM, progress=progress, out=out)
+    ok = True
+    if RANK == 0:
+        ref = c1_reference(series_file, "mad", w, s)
+        counters = np.memmap(pf, np.int64, "r")[::8]
+        ok = int(counters.sum()) == nw and np.array_equal(np.asarray(out), ref) and np.array_equal(got, ref)
+        # each rank only writes slots of its own block (slot index r*threads + t)
+        for r, p in enumerate(partition(n, w, s, SIZE)):
+            block = counters[r * threads:(r + 1) * threads]
+            ok = ok and int(block.sum()) == p.b - p.a
+    assert agree(ok)

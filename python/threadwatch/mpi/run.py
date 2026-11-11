@@ -31,6 +31,8 @@ def parse_args(argv=None):
     ap.add_argument("--model", help=".npz with `centroids` and `scale` (kmeans)")
     ap.add_argument("--reference", help=".npy with the C-1 scores; adds `identical` to the row")
     ap.add_argument("--save-scores", help="write the gathered scores to this .npy")
+    ap.add_argument("--progress", help="int64 memmap file with q*threads*8 counters (dashboard); must exist")
+    ap.add_argument("--scores-out", help="float32 memmap file with nw entries (dashboard); must exist")
     ap.add_argument("--repeats", type=int, default=1, help="timed repeats inside one launch (after one untimed warm-up if > 1)")
     ap.add_argument("--allow-oversubscribe", action="store_true", help="allow q x p above the logical cores (flagged in the row)")
     return ap.parse_args(argv)
@@ -54,12 +56,15 @@ def main(argv=None) -> int:
         ref = np.load(args.reference) if (args.reference and r == 0) else None
 
         n = comm.bcast(file_length(path) if r == 0 else None, root=0)
+        progress = np.memmap(args.progress, np.int64, "r+") if args.progress else None
+        scores_out = np.memmap(args.scores_out, np.float32, "r+") if args.scores_out else None
         label = f"MPI-{q}" if args.threads == 1 else f"HYB-{q}x{args.threads}"
         if args.repeats > 1:                                  # warm-up: page cache, DLL, OpenMP pools
             run(args.mode, path, args.w, args.s, args.threads, args.detector, comm=comm, model=model)
 
         for rep in range(args.repeats):
-            tm, score = run(args.mode, path, args.w, args.s, args.threads, args.detector, comm=comm, model=model)
+            tm, score = run(args.mode, path, args.w, args.s, args.threads, args.detector, comm=comm, model=model,
+                            progress=progress, out=scores_out)
             if r != 0:
                 continue
             row = {

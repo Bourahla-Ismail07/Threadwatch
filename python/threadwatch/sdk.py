@@ -71,10 +71,21 @@ def _progress_ptr(progress, threads):
     return progress.ctypes.data_as(C.POINTER(C.c_int64))
 
 
-def _run(name, x, w, s, threads, progress, *extra):
+def _out_buffer(out, n):
+    """Result buffer: a fresh array, or the caller's (float32, contiguous, writeable, exactly n entries).
+    With a caller buffer the scores appear in it while the C call runs (live view, D-07)."""
+    if out is None:
+        return np.empty(n, np.float32)
+    if (not isinstance(out, np.ndarray) or out.dtype != np.float32 or out.ndim != 1 or out.size != n
+            or not out.flags.c_contiguous or not out.flags.writeable):
+        raise ValueError(f"out must be a writeable contiguous float32 array with {n} entries")
+    return out
+
+
+def _run(name, x, w, s, threads, progress, *extra, out=None):
     a = _series(x)
     w, s, threads, nw = _window_args(a, w, s, threads)
-    out, st = np.empty(nw, np.float32), TwStats()
+    out, st = _out_buffer(out, nw), TwStats()
     _check(getattr(lib(), name)(a, len(a), w, s, out, threads, _progress_ptr(progress, threads),
                                 C.byref(st), *extra))
     return out, st
@@ -89,25 +100,25 @@ def window_features(x, w=256, s=1, threads=1, progress=None):
     return out, st
 
 
-def zscore(x, w=256, s=1, threads=1, progress=None):
-    return _run("tw_zscore", x, w, s, threads, progress)
+def zscore(x, w=256, s=1, threads=1, progress=None, out=None):
+    return _run("tw_zscore", x, w, s, threads, progress, out=out)
 
 
-def mad(x, w=256, s=1, threads=1, progress=None, schedule="static"):
+def mad(x, w=256, s=1, threads=1, progress=None, schedule="static", out=None):
     """schedule: "static" (equal blocks) or "dynamic" (chunks of 4096 windows); same output either way."""
     if schedule not in ("static", "dynamic"):
         raise ValueError('schedule must be "static" or "dynamic"')
-    return _run("tw_mad_ex", x, w, s, threads, progress, 0 if schedule == "static" else 1)
+    return _run("tw_mad_ex", x, w, s, threads, progress, 0 if schedule == "static" else 1, out=out)
 
 
-def kmeans_score(features, centroids, scale, threads=1, progress=None):
+def kmeans_score(features, centroids, scale, threads=1, progress=None, out=None):
     F = np.ascontiguousarray(features, dtype=np.float32)
     Cn = np.ascontiguousarray(centroids, dtype=np.float32)
     sc = np.ascontiguousarray(scale, dtype=np.float32)
     if (F.ndim != 2 or Cn.ndim != 2 or F.shape[1] != Cn.shape[1] or sc.shape != (F.shape[1],)
             or len(Cn) < 1 or int(threads) < 1):
         raise ValueError("incompatible features, centroids or scale, or threads < 1")
-    out, st = np.empty(len(F), np.float32), TwStats()
+    out, st = _out_buffer(out, len(F)), TwStats()
     _check(lib().tw_kmeans_score(F, len(F), F.shape[1], Cn, sc, len(Cn), out, int(threads),
                                  _progress_ptr(progress, threads), C.byref(st)))
     return out, st
