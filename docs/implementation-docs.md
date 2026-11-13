@@ -2,7 +2,7 @@
 
 ## 1. Plan at a glance
 
-- **Shape of the work:** ten deliverables (`D-01` to `D-10`). Eight of them are the items the teacher expects, in the same order; `D-06` completes the parallel program and `D-07` is the live dashboard that supports the demonstration.
+- **Shape of the work:** eleven deliverables (`D-01` to `D-11`). Eight of them are the items the teacher expects, in the same order; `D-06` completes the parallel program, `D-07` is the live dashboard that supports the demonstration, and `D-11` is a Rust command-line tool that runs everything from the terminal.
 - **Method:** a sequential reference first, then parallel versions, then measurements, in the eight steps of the course brief: problem, bibliography, data, sequential version, parallelisation, experiments, evaluation, report and demo.
 - **Rule:** a deliverable is sent only when it is testable (acceptance in its README). Commits are prefixed `D-nn:`.
 - **Vertical slice first:** D-01 to D-04 give a working end-to-end path (data → detector → metric → timing) in Python and in C before any parallel code is written.
@@ -19,6 +19,7 @@
 | **MPI (`mpi4py`, MS-MPI)** | Processes, scatter/gather, hybrid runs | domain decomposition, halo (overlap) regions, communication cost |
 | **FastAPI + SSE** | Start runs and stream live events | simple streaming APIs |
 | **HTML + CSS + vanilla JS** | The live dashboard | canvas drawing, SSE, responsive layout, accessibility |
+| **Rust (`tw` CLI)** | One fast command to build, test, run, race and benchmark, with choice menus for parameters and a terminal live view | process orchestration, memory-mapped reads, terminal UIs, low-overhead design |
 
 ### Why `ctypes` and a DLL, not a compiled Python extension
 
@@ -106,8 +107,9 @@ flowchart LR
 | 8 | D-08 Benchmark campaign | Tableaux de résultats |
 | 9 | D-09 Analysis, graphs and interpretation | Graphiques et interprétation |
 | 10 | D-10 Final report and demonstration | Rapport final et démonstration |
+| 11 | D-11 Rust CLI (`tw`) | extra, optional |
 
-D-07 only needs D-05, so it can be built while D-06 and D-08 are in progress. Dependencies are in `deliverables/README.md`.
+D-07 only needs D-05, so it can be built while D-06 and D-08 are in progress. D-11 comes last: it needs the progress-file contract of D-07 and the runner of D-08, and it is optional for the teacher's items. Dependencies are in `deliverables/README.md`.
 
 ## 6. Repo layout
 
@@ -121,6 +123,7 @@ threadwatch/
 ├─ python/threadwatch/     # lib.py (ctypes), data/, detectors/, metrics.py, mpi/, bench/, service/
 ├─ tests/python/
 ├─ apps/dashboard/         # index.html, style.css, app.js
+├─ crates/tw-cli/          # Rust CLI (binary `tw`)
 ├─ experiments/            # run_matrix.py, out/ (results.csv, machine.json, figures/)
 ├─ docs/                   # these docs, deliverables/, design/, math.md, data.md, perf.md
 ├─ report/                 # report sources
@@ -133,6 +136,7 @@ threadwatch/
 - **C:** GCC from MSYS2 UCRT64 (`mingw-w64-ucrt-x86_64-gcc`), `make`, OpenMP (`libgomp`, included with GCC).
 - **Python:** `numpy`, `pandas`, `scikit-learn`, `matplotlib`, `mpi4py`, `fastapi`, `uvicorn`, `psutil`, `pytest`, `ruff`. Optional: `pyarrow`, `threadpoolctl` (to pin library threads in PY-SEQ).
 - **MPI runtime:** Microsoft MS-MPI (runtime and SDK) on Windows.
+- **Rust (D-11):** `clap`, `cliclack` (choice menus), `indicatif`, `ratatui` with `crossterm`, `num_cpus`, `memmap2`, `serde`, `serde_json`, `csv`, `anyhow`, `ctrlc`, `which`, `sysinfo`; optional `libloading`; tests with `assert_cmd` and `tempfile`.
 - **Browser:** no library. Inter and JetBrains Mono from Google Fonts, with system fallbacks.
 
 ## 8. Working agreement
@@ -169,6 +173,8 @@ One entry per deliverable; a final "Project summary" section lists hypotheses H1
 | Isolation Forest scoring too slow at large sizes | long benchmark | cap its size (default 2M) and report it as a library-parallelism case |
 | Memory limits at 20M+ samples | crashes | use `float32`, memory-mapped input, stride above 1 for the largest size |
 | Dashboard disturbs timings | invalid numbers | headless runs for all reported figures; measure the dashboard overhead in D-07 |
+| CLI animation disturbs timings | invalid numbers | `tw bench` never animates during timed cells; measure the live-view overhead in D-11 |
+| Rust toolchain friction on Windows (MSVC build tools) | blocks D-11 | use `stable-x86_64-pc-windows-gnu`; the CLI only starts external processes, so the toolchains are independent |
 | Real datasets too small to show scaling | scaling claims weak | scaling uses synthetic series; real data is used for quality only |
 
 ## 11. Environment setup

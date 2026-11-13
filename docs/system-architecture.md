@@ -17,10 +17,15 @@ flowchart TB
     L["Launchers<br/>PY-SEQ · C-1/OMP-p · MPI-q/HYB-q×p"]
     BH["Benchmark harness<br/>timers, CSV, graphs"]
     SVC["Live service<br/>FastAPI + SSE + monitor thread"]
+    RN["threadwatch.runner<br/>one run, JSON result"]
   end
 
   subgraph SDK["C tier"]
     DLL["threadwatch.dll<br/>C11 + OpenMP<br/>features · z-score · MAD · K-Means score"]
+  end
+
+  subgraph TERM["Terminal"]
+    CLI["tw CLI (Rust)<br/>doctor · build · test · run · race · bench"]
   end
 
   subgraph WEB["Browser"]
@@ -37,6 +42,10 @@ flowchart TB
   SVC -->|"SSE events"| UI
   UI -->|"POST /api/runs"| SVC
   SVC --> L
+  CLI -->|"spawns"| RN
+  CLI -->|"spawns make, pytest, mpiexec"| L
+  RN --> L
+  RN -.->|"progress.bin (read-only)"| CLI
 ```
 
 ## 3. Responsibilities
@@ -51,6 +60,7 @@ flowchart TB
 | Benchmark harness | Python, pandas, matplotlib | run the configuration matrix, timers, speedup, efficiency, CSV, plots | drop odd or failed runs |
 | Live service | Python, FastAPI, uvicorn, psutil | start jobs, read progress, stream SSE | compute detections itself |
 | Dashboard | HTML, CSS, vanilla JavaScript (canvas) | render live panels | hold detection logic |
+| CLI (`tw`) | Rust, `clap`, `indicatif`, `ratatui`, `memmap2` | start build, tests, runs and benchmarks as processes; show progress; read `progress.bin` read-only | compute detections, animate during timed benchmark cells |
 
 ## 4. Five execution modes
 

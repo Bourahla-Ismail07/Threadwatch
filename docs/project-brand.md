@@ -59,6 +59,12 @@ One horizontal line (the series) splits into parallel strands (the threads) that
 4. **Responsive:** panels stack under 768 px.
 5. Accessibility: contrast AA, keyboard navigable, `prefers-reduced-motion` respected.
 
+## Terminal (CLI) look
+
+- Same tokens in truecolor ANSI; every mode keeps its marker (■ ● ▲ ◆ ⬢) with ASCII fallbacks (`[]`, `o`, `^`, `<>`, `#`).
+- Animations are short and optional: off with `--no-anim`, `NO_COLOR`, `TW_REDUCED_MOTION=1` or when output is not a terminal, and never drawn while a benchmark cell is timed.
+- Same voice as the UI: measured numbers with units, e.g. `OMP-4 · 3.5x vs C-1 · efficiency 88%`.
+
 ## Naming conventions
 
 | Thing | Convention |
@@ -66,6 +72,7 @@ One horizontal line (the series) splits into parallel strands (the threads) that
 | DLL and header | `threadwatch.dll`, `threadwatch.h`; exported functions prefixed `tw_` |
 | Python package | `threadwatch`, submodules `threadwatch.data`, `.detectors`, `.metrics`, `.mpi`, `.bench`, `.service` |
 | Dashboard | `threadwatch-ui` (`apps/dashboard/`) |
+| CLI | crate `tw-cli`, binary `tw` (`crates/tw-cli/`) |
 | Git tags | `v0.1.0` … semantic versioning |
 | Commits | `D-05: add OpenMP MAD kernel` (prefix with deliverable ID) |
 | Branches | `d-05-openmp-kernels` |

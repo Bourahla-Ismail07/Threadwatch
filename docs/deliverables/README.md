@@ -16,6 +16,7 @@ Each deliverable has its own folder and README with: what the part is responsibl
 | D-08 | Benchmark campaign | Tableaux de résultats | `results.csv` + summary tables | [D-08](D-08-benchmark-campaign/README.md) |
 | D-09 | Analysis, graphs and interpretation | Graphiques et interprétation | figures + reading of H1 to H4 | [D-09](D-09-analysis-and-graphs/README.md) |
 | D-10 | Final report and demonstration | Rapport final et démonstration | report (PDF) + demo script + release | [D-10](D-10-report-and-demo/README.md) |
+| D-11 | Rust CLI (`tw`) | extra, optional | CLI binary + `docs/cli.md` + short screen recording | [D-11](D-11-rust-cli/README.md) |
 
 ## Dependency order
 
@@ -32,6 +33,8 @@ flowchart LR
   D08 --> D09["D-09 analysis + graphs"]
   D09 --> D10["D-10 report + demo"]
   D07 --> D10
+  D08 --> D11["D-11 Rust CLI"]
+  D07 --> D11
 ```
 
 ## Sending rule
@@ -46,6 +49,7 @@ A deliverable is sent when its acceptance checks pass, in the order of the table
 4. Keep only the MPI file mode and drop scatter.
 5. Drop hybrid, keeping OpenMP and MPI.
 6. Reduce the race view in the dashboard to a single-run view.
+7. D-11 (the CLI) is optional: `make` targets and the Python commands do the same work without it.
 
 ## Definition of done (all deliverables)
 

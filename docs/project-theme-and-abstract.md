@@ -43,7 +43,7 @@ Monitoring systems must detect anomalies in server metrics fast enough to keep u
 
 ## 5. Scope
 
-**In scope:** univariate series (one metric per run, several metrics as an extension); a single Windows machine for OpenMP, MPI and hybrid runs; public datasets plus a labelled synthetic generator; offline batch detection plus a live replay in the dashboard.
+**In scope:** univariate series (one metric per run, several metrics as an extension); a single Windows machine for OpenMP, MPI and hybrid runs; public datasets plus a labelled synthetic generator; offline batch detection plus a live replay in the dashboard and a Rust command-line tool that runs build, tests, runs and benchmarks.
 
 **Out of scope:** production monitoring claims, GPU acceleration, multi-machine clusters, Spark, deep-learning detectors, energy measurement.
 
@@ -64,4 +64,5 @@ Monitoring systems must detect anomalies in server metrics fast enough to keep u
 | Language effect | Python time ÷ C-1 time | reported separately from parallel speedup |
 | MPI | gathered output vs C-1 output | identical, including boundary windows |
 | Dashboard | slowdown from live monitoring | below 2% against a headless run |
+| CLI | live-view overhead; start-up time | below 2% against a direct run; under 50 ms |
 | Delivery | every D-nn merged, tested, changelogged, sent | 100% |
