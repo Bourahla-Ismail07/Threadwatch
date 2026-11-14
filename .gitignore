@@ -8,5 +8,4 @@ runs/
 *.egg-info/
 .pytest_cache/
 .vscode/
-experiments/out/
 experiments/pseudo_db/

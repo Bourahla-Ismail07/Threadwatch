@@ -1,0 +1,2 @@
+dataset,detector,w,s,runs,drift_pct,flag
+syn_1M,zscore,256,1,5,-52.34426646611726,False

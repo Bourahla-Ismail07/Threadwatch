@@ -1,0 +1,20 @@
+2026-11-14 09:02:17  block syn_1M / zscore (w=256, s=1): 18 runs to do in 3 cells
+2026-11-14 09:02:18  background CPU 40% above 15%: waiting 5 s (close other applications)
+2026-11-14 09:02:28  syn_1M|zscore|C-1|w256|s1 r0: 0.426 s, identical=True
+2026-11-14 09:02:29  syn_1M|zscore|OMP-2|w256|s1 r0: 0.299 s, identical=True
+2026-11-14 09:02:29  syn_1M|zscore|MPI-2|w256|s1 r0: 0.173 s, identical=True
+2026-11-14 09:02:30  syn_1M|zscore|OMP-2|w256|s1 r1: 0.312 s, identical=True
+2026-11-14 09:02:30  syn_1M|zscore|MPI-2|w256|s1 r1: 0.177 s, identical=True
+2026-11-14 09:02:31  syn_1M|zscore|C-1|w256|s1 r1: 0.623 s, identical=True
+2026-11-14 09:02:31  syn_1M|zscore|MPI-2|w256|s1 r2: 0.172 s, identical=True
+2026-11-14 09:02:32  syn_1M|zscore|C-1|w256|s1 r2: 0.331 s, identical=True
+2026-11-14 09:02:32  syn_1M|zscore|OMP-2|w256|s1 r2: 0.167 s, identical=True
+2026-11-14 09:02:32  syn_1M|zscore|C-1|w256|s1 r3: 0.345 s, identical=True
+2026-11-14 09:02:32  syn_1M|zscore|OMP-2|w256|s1 r3: 0.191 s, identical=True
+2026-11-14 09:02:33  syn_1M|zscore|MPI-2|w256|s1 r3: 0.174 s, identical=True
+2026-11-14 09:02:33  syn_1M|zscore|OMP-2|w256|s1 r4: 0.251 s, identical=True
+2026-11-14 09:02:34  syn_1M|zscore|MPI-2|w256|s1 r4: 0.171 s, identical=True
+2026-11-14 09:02:34  syn_1M|zscore|C-1|w256|s1 r4: 0.370 s, identical=True
+2026-11-14 09:02:35  syn_1M|zscore|MPI-2|w256|s1 r5: 0.178 s, identical=True
+2026-11-14 09:02:35  syn_1M|zscore|C-1|w256|s1 r5: 0.365 s, identical=True
+2026-11-14 09:02:35  syn_1M|zscore|OMP-2|w256|s1 r5: 0.241 s, identical=True

@@ -1,0 +1,4 @@
+# keep results.csv, machine.json, thresholds.json, models/, summary_*.csv, coverage.csv, drift.csv, campaign.log
+tmp/
+backups/
+current.json

@@ -1,7 +1,51 @@
 {
-  "cpu": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
-  "tw_max_threads": 12,
+  "captured_at": "2026-11-14T08:02:14+00:00",
+  "os": "Windows-11-10.0.26200-SP0",
+  "machine": "AMD64",
+  "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
   "logical_cores": 12,
   "physical_cores": 8,
-  "tw_version": 100
+  "cpu_freq_mhz": {
+    "current": 2400,
+    "max": 2400
+  },
+  "ram_gb": 11.7,
+  "power_plan": "Balanced",
+  "on_battery": false,
+  "python": "3.13.2",
+  "packages": {
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "pandas": "3.1.1",
+    "sklearn": "1.9.1",
+    "threadpoolctl": "3.8.0",
+    "psutil": "7.2.2",
+    "joblib": "1.6.0",
+    "yaml": "6.0.3"
+  },
+  "mpi": {
+    "mpi4py": "4.1.2",
+    "library": "Microsoft MPI 10.1.12498.52"
+  },
+  "dll": {
+    "build_note": null,
+    "version": null,
+    "path": null,
+    "sha256": null
+  },
+  "thread_env": {},
+  "git": {
+    "commit": "ddec98cb603128e362087c0f625c04f578a9ff3d",
+    "dirty": true
+  },
+  "fingerprint": {
+    "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+    "logical_cores": 12,
+    "ram_gb": 11.7,
+    "python": "3.13.2",
+    "numpy": "2.5.4",
+    "sklearn": "1.9.1",
+    "dll_sha256": null,
+    "dll_version": null
+  }
 }

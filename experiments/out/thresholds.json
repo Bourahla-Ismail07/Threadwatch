@@ -1,0 +1,26 @@
+{
+ "syn_1M|iforest|256": {
+  "rho": 0.001,
+  "sample_windows": 100000,
+  "seed": 0,
+  "threshold": 0.6834718040583301
+ },
+ "syn_1M|kmeans|256": {
+  "rho": 0.001,
+  "sample_windows": 100000,
+  "seed": 0,
+  "threshold": 1.6054538488388062
+ },
+ "syn_1M|mad|256": {
+  "rho": 0.001,
+  "sample_windows": 100000,
+  "seed": 0,
+  "threshold": 3.8496007919311523
+ },
+ "syn_1M|zscore|256": {
+  "rho": 0.001,
+  "sample_windows": 100000,
+  "seed": 0,
+  "threshold": 3.4808061122894287
+ }
+}
