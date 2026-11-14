@@ -22,7 +22,7 @@ from .driver import DETECTORS, MODES, check_threads, file_length, run
 def parse_args(argv=None):
     ap = argparse.ArgumentParser(prog="threadwatch.mpi.run")
     ap.add_argument("--mode", choices=MODES, default="file", help="file: every rank maps the file; scatter: rank 0 sends slices")
-    ap.add_argument("--dataset", required=True, help="series name under --root (<root>/<name>.f32)")
+    ap.add_argument("--dataset", required=True, help="series name under --root (data/series/<name>.f32)")
     ap.add_argument("--root", default=str(DATA_ROOT), help="folder holding <dataset>.f32 (default: TW_DATA or data/series)")
     ap.add_argument("--detector", choices=DETECTORS, default="zscore")
     ap.add_argument("--threads", type=int, default=1, help="threads per rank (p); 1 = pure MPI")
@@ -31,6 +31,7 @@ def parse_args(argv=None):
     ap.add_argument("--model", help=".npz with `centroids` and `scale` (kmeans)")
     ap.add_argument("--reference", help=".npy with the C-1 scores; adds `identical` to the row")
     ap.add_argument("--save-scores", help="write the gathered scores to this .npy")
+    ap.add_argument("--save-on-mismatch", help="with --reference: write the gathered scores here only if they differ from it (D-08)")
     ap.add_argument("--progress", help="int64 memmap file with q*threads*8 counters (dashboard); must exist")
     ap.add_argument("--scores-out", help="float32 memmap file with nw entries (dashboard); must exist")
     ap.add_argument("--repeats", type=int, default=1, help="timed repeats inside one launch (after one untimed warm-up if > 1)")
@@ -78,6 +79,8 @@ def main(argv=None) -> int:
             }
             if ref is not None:
                 row["identical"] = bool(np.array_equal(score, ref))
+                if not row["identical"] and args.save_on_mismatch:
+                    np.save(args.save_on_mismatch, score)
             print("TW_ROW " + json.dumps(row), flush=True)
             if args.save_scores and rep == args.repeats - 1:
                 np.save(args.save_scores, score)
