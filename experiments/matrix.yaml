@@ -1,0 +1,51 @@
+# D-08 experiment matrix. Everything the campaign runs is defined here; nothing is hard-coded in the harness.
+
+datasets: [syn_1M, syn_2M, syn_5M, syn_10M, syn_20M]      # add syn_50M if memory and time allow
+detectors: [zscore, mad, kmeans, iforest]
+window: {w: 256, s: 1}
+
+protocol:
+  warmup: 1                      # discarded from statistics but kept in the CSV (status = warmup)
+  repeats: 5                     # timed runs per cell (minimum required by the protocol)
+  cv_flag_pct: 10                # cells above this coefficient of variation are flagged for a rerun
+  pause_between_blocks_s: 90     # cool-down between (dataset, detector) blocks
+  rho: 0.001                     # threshold = (1 - rho) quantile of the fit-sample scores
+  fit_sample: 100000             # windows in the fit sample (same sample and threshold for every mode)
+  seed: 0
+  max_background_cpu_pct: 15     # warn if the machine is busier than this before a block
+  allow_oversubscribe: false     # q x p above the logical cores: never in a real campaign
+
+modes:
+  PY-SEQ:
+    max_n: {zscore: 2M, mad: 1M, kmeans: 2M, iforest: 2M}   # cost limits; larger sizes are optional extras
+  C-1: {}
+  OMP:
+    threads: auto                # 2, 4, 8, ... up to the logical cores, plus the logical core count
+  MPI:
+    ranks: [2, 4]
+    scatter_on: [syn_2M, syn_10M]    # input mode "scatter" on two sizes (mode column: MPI-scatter); file everywhere
+  HYB:
+    shapes: [[2, 2], [2, 4]]     # ranks x threads
+
+iforest:                         # features in C, scoring in scikit-learn (n_jobs = thread parameter)
+  modes: [PY-SEQ, C-1, OMP]      # no MPI/HYB: scikit-learn parallelism is library-level, not a D-06 kernel
+  max_n: 2M                      # raise to include larger sizes (slow)
+
+extras:                          # second stride on one size (all detectors; PY-SEQ skipped)
+  - name: second_stride
+    datasets: [syn_5M]
+    window: {w: 256, s: 16}
+    skip_modes: [PY-SEQ]
+
+timeouts:                        # per run; timeout = max(minimum_s, factor x cost bound)
+  factor: 4
+  minimum_s: 120
+  # seconds per million samples for ONE run; used for timeouts and the cost bound shown by --dry-run.
+  # c1: zscore/mad/kmeans from docs/t1-results.md (T1 per million samples); iforest is an estimate
+  #     (replace with your measured value). Parallel modes are bounded by C-1.
+  c1_seconds_per_msamples: {zscore: 0.45, mad: 6.3, kmeans: 0.47, iforest: 6.0}
+  # py: from docs/first-results.md (T_py per million samples)
+  py_seconds_per_msamples: {zscore: 2.2, mad: 9.2, kmeans: 2.9, iforest: 5.8}
+
+mpiexec: mpiexec                 # MS-MPI on Windows
+dll_build_note: ""               # free text copied to machine.json, e.g. "gcc 15 -O3 -fopenmp, no -ffast-math"
