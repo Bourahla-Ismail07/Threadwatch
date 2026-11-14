@@ -1,5 +1,8 @@
 # Changelog
 
+# D-08 
+- D-08: benchmark campaign (matrix, protocol, raw results.csv, machine.json, summary tables)
+
 ## D-07
 - D-07: live dashboard (FastAPI SSE + vanilla JS): thread lanes, core load, throughput, race view; overhead < 2%
 
