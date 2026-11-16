@@ -1,0 +1,3 @@
+detector,label,sizes,vs_C1,slower_below,faster_from,crossover_estimate_n,status
+zscore,OMP-2,1M,faster,,,,"faster at every measured size (crossover, if any, below the smallest size)"
+zscore,MPI-2,1M,faster,,,,"faster at every measured size (crossover, if any, below the smallest size)"

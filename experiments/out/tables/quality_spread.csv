@@ -1,0 +1,2 @@
+detector,n,modes,f1_min,f1_max,f1_range,deterministic_kernel
+zscore,1000000,3,0.01694915254237288,0.01694915254237288,0.0,True
